@@ -5,7 +5,7 @@ with open(sys.argv[1]) as f:
     for line in map(str.strip, f):
         grid.append(line)
 
-def search_from(r, c):
+def search_xmas_from(r, c):
     dirs = [
         [1, 0],
         [1, 1],
@@ -37,10 +37,32 @@ def search_from(r, c):
             num_found += 1
     return num_found
 
-total = 0
+def search_x_mas_from(r, c):
+    if r < 1 or c < 1 or r == len(grid) - 1 or c == len(grid[0]) - 1:
+        return 0
+
+    a, b = grid[r - 1][c - 1], grid[r + 1][c + 1]
+    c, d = grid[r - 1][c + 1], grid[r + 1][c - 1]
+
+    if (
+        "S" in (a, b) and
+        "M" in (a, b) and
+        "S" in (c, d) and
+        "M" in (c, d)
+    ):
+        return 1
+
+    return 0
+
+part1 = 0
+part2 = 0
 for r, row in enumerate(grid):
     for c, letter in enumerate(row):
         if letter == "X":
-            found = search_from(r, c)
-            total += found
-print(total)
+            found = search_xmas_from(r, c)
+            part1 += found
+        if letter == "A":
+            found = search_x_mas_from(r, c)
+            part2 += found
+print(part1)
+print(part2)
