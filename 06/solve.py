@@ -11,16 +11,16 @@ with open(sys.argv[1]) as f:
                 case '#':
                     field.add((x, y))
                 case '<':
-                    guard = (x, y)
+                    start = (x, y)
                     move = (-1, 0)
                 case '>':
-                    guard = (x, y)
+                    start = (x, y)
                     move = (1, 0)
                 case '^':
-                    guard = (x, y)
+                    start = (x, y)
                     move = (0, -1)
                 case 'v':
-                    guard = (x, y)
+                    start = (x, y)
                     move = (0, 1)
 
 turns = {
@@ -30,22 +30,48 @@ turns = {
     (0, 1): (-1, 0),
 }
 
-visited = set()
-while True:
-    visited.add(guard)
-    new_pos = (guard[0] + move[0], guard[1] + move[1])
-    if new_pos in field:
-        # Would hit an obstacle
-        move = turns[move]
-    elif (
-        new_pos[0] >= width or
-        new_pos[1] >= height or
-        new_pos[0] < 0 or
-        new_pos[1] < 0
-    ):
-            break
-    else:
-        guard = new_pos
+def simulate(start, move, field):
+    guard = start
+    visited = set()
+    while True:
+        if (guard, move) in visited:
+            # Same place in same direction - we're done
+            return len(set([v[0] for v in visited])), True
 
-part1 = len(visited)
+        visited.add((guard, move))
+        new_pos = (guard[0] + move[0], guard[1] + move[1])
+        if new_pos in field:
+            # Would hit an obstacle
+            move = turns[move]
+        elif (
+            new_pos[0] >= width or
+            new_pos[1] >= height or
+            new_pos[0] < 0 or
+            new_pos[1] < 0
+        ):
+                break
+        else:
+            guard = new_pos
+
+    return len(set([v[0] for v in visited])), False
+
+part1, _ = simulate(start, move, field)
 print(part1)
+
+part2 = 0
+# Naive brute force search
+for y in range(height):
+    sys.stdout.write(".")
+    sys.stdout.flush()
+    for x in range(width):
+        if (x, y) in field:
+            continue
+        if (x, y) == start:
+            continue
+        new_field = field.copy()
+        new_field.add((x, y))
+        _, loop = simulate(start, move, new_field)
+        if loop:
+            part2 += 1
+    print("")
+print(part2)
