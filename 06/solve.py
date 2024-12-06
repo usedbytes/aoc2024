@@ -35,8 +35,8 @@ def simulate(start, move, field):
     visited = set()
     while True:
         if (guard, move) in visited:
-            # Same place in same direction - we're done
-            return len(set([v[0] for v in visited])), True
+            # Same place in same direction - we looped
+            return set([v[0] for v in visited]), True
 
         visited.add((guard, move))
         new_pos = (guard[0] + move[0], guard[1] + move[1])
@@ -53,25 +53,22 @@ def simulate(start, move, field):
         else:
             guard = new_pos
 
-    return len(set([v[0] for v in visited])), False
+    return set([v[0] for v in visited]), False
 
 part1, _ = simulate(start, move, field)
-print(part1)
+print(len(part1))
 
 part2 = 0
-# Naive brute force search
-for y in range(height):
-    sys.stdout.write(".")
-    sys.stdout.flush()
-    for x in range(width):
-        if (x, y) in field:
-            continue
-        if (x, y) == start:
-            continue
-        new_field = field.copy()
-        new_field.add((x, y))
-        _, loop = simulate(start, move, new_field)
-        if loop:
-            part2 += 1
-    print("")
+# Brute-forcey but better than hitting every grid square. We only need to
+# check places that the guard actually visited
+for (x, y) in part1:
+    if (x, y) in field:
+        continue
+    if (x, y) == start:
+        continue
+    new_field = field.copy()
+    new_field.add((x, y))
+    _, loop = simulate(start, move, new_field)
+    if loop:
+        part2 += 1
 print(part2)
