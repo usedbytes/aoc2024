@@ -65,8 +65,8 @@ class MachineState:
             self.pc += 2
 
     def bxc(self, ignored):
-            self.b = self.b ^ self.c
-            self.pc += 2
+        self.b = self.b ^ self.c
+        self.pc += 2
 
     def out(self, combo):
         val = self.__decode_combo(combo) & 0x7
@@ -115,3 +115,67 @@ with open(sys.argv[1]) as f:
 machine.run()
 p1 = machine.get_output()
 print(p1)
+
+def part2_slow():
+    # This should work, but seems like it will take to the heat-death of the
+    # universe
+    program = init_state["program"]
+    init_a = 0
+    while True:
+        init_a += 1
+        a = init_a
+        b = 0
+        c = 0
+        result = []
+        if init_a % 1000000 == 0:
+            print(".", end="")
+        if init_a % 10000000 == 0:
+            print(init_a)
+        for i in range(len(program)):
+            b = a & 0x7
+            b ^= 1
+            c = a // 2**b
+            b = b ^ c
+            b = b ^ 4
+            result.append(b & 0x7)
+            if b & 0x7 != program[i]:
+                break
+            a = a // 8
+        if result == program:
+            print(init_a, result)
+            break
+
+# By the power of crafted inputs...
+# My program is a single loop. The only state that carries from one iteration
+# to the next is 'a', and it's divided by 8 each loop.
+#
+#    b = a & 0x7
+#    b ^= 1
+#    c = a // 2**b
+#    b = b ^ c
+#    a = a // 8
+#    b = b ^ 4
+#    out b & 0x7
+#    jnz 0
+#
+# So, we can work from end to start:
+#   - Find the lowest value of 'a' which gives the right value for the last output
+#   - Multiply that 'a' value by 8
+#   - Use that result as the starting value, try adding 1 until the resulting
+#     output is the correct last 2 values
+#   - Multiply that by 8...
+#   - Repeat until you complete the program
+program = init_state["program"]
+init_a = 0
+for i in range(len(program)):
+    # Determined this by inspection of my program.
+    # The only mutation of a is divide by 8 before the loop
+    init_a *= 8
+    while True:
+        machine = MachineState(**init_state)
+        machine.a = init_a
+        machine.run()
+        if machine.out_buf == program[-(i + 1):]:
+            break
+        init_a += 1
+print(init_a)
