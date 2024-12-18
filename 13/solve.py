@@ -1,11 +1,31 @@
-from collections import deque
+from collections import deque, namedtuple
 import sys
 import re
 
 btn_re = re.compile(r"X(.*), Y(.*)")
 prize_re = re.compile(r"X=(.*), Y=(.*)")
 
+Matrix = namedtuple("Matrix", "a b c d")
+
+def do_claw(a_step, b_step, prize):
+    m = Matrix(a_step[0], b_step[0], a_step[1], b_step[1])
+
+    denominator = m.a * m.d - m.b * m.c
+
+    # Partial inverse - not divided by determinant
+    m_ip = Matrix(m.d, -m.b, -m.c, m.a)
+
+    a = (m_ip.a * prize[0] + m_ip.b * prize[1]) // denominator
+    b = (m_ip.c * prize[0] + m_ip.d * prize[1]) // denominator
+
+    if a * a_step[0] + b * b_step[0] == prize[0] and \
+        a * a_step[1] + b * b_step[1] == prize[1]:
+            return (a, b)
+
+    return None
+
 p1 = 0
+p2 = 0
 with open(sys.argv[1]) as f:
     try:
         while True:
@@ -22,34 +42,18 @@ with open(sys.argv[1]) as f:
             match = prize_re.fullmatch(prize_line)
             prize = (int(match.group(1)), int(match.group(2)))
 
-            start = (0, 0)
-            queue = deque()
-            queue.append(((start[0] + a_step[0], start[1] + b_step[1]), (1, 0)))
-            queue.append(((start[0] + b_step[0], start[1] + b_step[1]), (0, 1)))
-
-            min_steps = None
-            seen = set()
-            while len(queue) > 0:
-                (px, py), (a, b) = queue.popleft()
-                if (px, py) == prize:
-                    min_steps = (a, b)
-                    break
-
-                next_a = (px + a_step[0], py + a_step[1])
-                if next_a not in seen and a < 101:
-                    seen.add(next_a)
-                    queue.append((next_a, (a + 1, b)))
-
-                next_b = (px + b_step[0], py + b_step[1])
-                if next_b not in seen and b < 101:
-                    seen.add(next_b)
-                    queue.append((next_b, (a, b + 1)))
-
-            if min_steps is not None:
-                a, b = min_steps
+            presses = do_claw(a_step, b_step, prize)
+            if presses is not None:
+                a, b = presses
                 p1 += (3 * a) + b
+
+            presses = do_claw(a_step, b_step, (prize[0] + 10000000000000, prize[1] + 10000000000000))
+            if presses is not None:
+                a, b = presses
+                p2 += (3 * a) + b
 
             _ = next(lines)
     except StopIteration:
         pass
 print(p1)
+print(p2)
