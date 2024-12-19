@@ -13,3 +13,5 @@ if [ ! -f ${ZERO_DAY}/solve.py ]
 then
 	cp template.py ${ZERO_DAY}/solve.py
 fi
+
+touch ${ZERO_DAY}/sample.txt
