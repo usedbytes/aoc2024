@@ -4,24 +4,28 @@ from functools import cache
 
 @cache
 def make_towel(towel, fragments):
+    ways = 0
     for f in fragments:
         if f == towel:
-            return True
+            ways += 1
         elif towel.startswith(f):
-            if make_towel(towel[len(f):], fragments):
-                return True
+            ways += make_towel(towel[len(f):], fragments)
 
-    return False
+    return ways
 
 with open(sys.argv[1]) as f:
     lines = map(str.strip, f)
 
     fragments = tuple(next(lines).split(", "))
 
-    p1 = 0
+    p1, p2 = 0, 0
     for line in lines:
         if line == "":
             continue
 
-        p1 += make_towel(line, fragments)
+        ways = make_towel(line, fragments)
+        if ways > 0:
+            p1 += 1
+        p2 += ways
 print(p1)
+print(p2)
