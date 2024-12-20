@@ -52,26 +52,21 @@ path.append((end[0], end[1], len(path)))
 # New path is then path[:cheat[0]] + path[cheat[1]:] 
 
 # mapping from saved distance -> number of cheats
-cheats = defaultdict(int)
+p1 = 0
+p2 = 0
 for a, b in itertools.combinations(path, 2):
-    if a[0] != b[0] and a[1] != b[1]:
-        # can't cheat diagonally
-        continue
-
     distance = abs(b[0] - a[0]) + abs(b[1] - a[1])
-    if distance > 2:
-        # too far to cheat
+    if distance > 20:
         continue
 
     start_idx = a[2]
     end_idx = b[2]
     new_length = start_idx + distance + (len(path) - end_idx)
     saved = len(path) - new_length
-    if saved > 0:
-        cheats[saved] += 1
+    if saved >= 100:
+        if distance <= 2:
+            p1 += 1
+        p2 += 1
 
-p1 = 0
-for k, v in cheats.items():
-    if k >= 100:
-        p1 += v
 print(p1)
+print(p2)
