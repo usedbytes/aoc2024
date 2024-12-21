@@ -1,3 +1,4 @@
+import enum
 import sys
 from functools import cache
 from itertools import permutations, pairwise
@@ -38,6 +39,10 @@ directions = {
     "<": (-1, 0),
     "^": (0, 1),
 }
+
+class PadType(enum.IntEnum):
+    Number = 0
+    Direction = 1
 
 def build_numpad_graph():
     numpad_moves = {}
@@ -109,35 +114,55 @@ def type_code(code, graph):
 
     return sequence
 
-def shortest_sequence(code, graphs, validators):
-    if len(graphs) == 0:
-        return code
+@cache
+def shortest_sequence(code, pad_types):
+    if len(pad_types) == 0:
+        return len(code)
 
-    graph = graphs[0]
-    valid = validators[0]
-    result = ""
+    pad_type = pad_types[0]
+    graph = {
+        PadType.Number: numpad_moves,
+        PadType.Direction: dpad_moves,
+    }[pad_type]
+
+    valid = {
+        PadType.Number: numpad_valid,
+        PadType.Direction: dpad_valid,
+    }[pad_type]
+
+    result = 0
     for pair in pairwise("A" + code):
         canonical = graph[pair]
-        min_seq = None
+        min_len = None
         for perm in permutations(canonical):
             if not valid(pair[0], perm):
                continue
-            seq = shortest_sequence("".join(perm) + "A", graphs[1:], validators[1:])
-            if min_seq is None or len(seq) < len(min_seq):
-                min_seq = seq
-        result += min_seq
+            new_len = shortest_sequence("".join(perm) + "A", pad_types[1:])
+            if min_len is None or new_len < min_len:
+                min_len = new_len
+        result += min_len
     return result
 
 numpad_moves = build_numpad_graph()
 dpad_moves = build_dpad_graph()
-graphs = (numpad_moves, dpad_moves, dpad_moves)
-validators = (numpad_valid, dpad_valid, dpad_valid)
 
-p1 = 0
+codes = []
 with open(sys.argv[1]) as f:
     for line in map(str.strip, f):
-        seq = shortest_sequence(line, graphs, validators)
-        complexity = int(line[:-1]) * len(seq)
-        p1 += complexity
+        codes.append(line)
+
+p1 = 0
+pad_types = (PadType.Number, ) + 2 * (PadType.Direction, )
+for code in codes:
+    min_len = shortest_sequence(code, pad_types)
+    complexity = int(code[:-1]) * min_len
+    p1 += complexity
 print(p1)
 
+p2 = 0
+pad_types = (PadType.Number, ) + 25 * (PadType.Direction, )
+for code in codes:
+    min_len = shortest_sequence(code, pad_types)
+    complexity = int(code[:-1]) * min_len
+    p2 += complexity
+print(p2)
